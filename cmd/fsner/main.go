@@ -83,7 +83,10 @@ func main() {
 				return fmt.Errorf("pattern is required")
 			}
 			// validate regex once
-			re := regexp.MustCompile(pattern)
+			re, err := regexp.Compile(pattern)
+			if err != nil {
+				return fmt.Errorf("invalid regex pattern, %w", err)
+			}
 			wg.Add(1)
 			go scanner.SearchFile(ctx, root, re, verbose, ch, &wg)
 			return nil
