@@ -9,8 +9,13 @@ import (
 	"sync"
 )
 
+type SearchResult struct {
+	Path string
+	Info fs.FileInfo
+}
+
 // if verbose is false, skip dir read error messages
-func SearchFile(root string, re *regexp.Regexp, verbose bool, ch chan<- fs.FileInfo, wg *sync.WaitGroup) {
+func SearchFile(root string, re *regexp.Regexp, verbose bool, ch chan<- SearchResult, wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
@@ -37,7 +42,7 @@ func SearchFile(root string, re *regexp.Regexp, verbose bool, ch chan<- fs.FileI
 					fmt.Fprintf(os.Stderr, "failed to get info on %s: %v\n", entry.Name(), err)
 					return
 				}
-				ch <- info
+				ch <- SearchResult{full_path, info}
 			}
 		}
 	}

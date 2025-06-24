@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"regexp"
 	"sync"
@@ -13,8 +12,10 @@ import (
 
 func main() {
 
+	const MiB = 1 << 20 // 1 MiB in bytes
+
 	var wg sync.WaitGroup
-	ch := make(chan fs.FileInfo, 100)
+	ch := make(chan scanner.SearchResult, 100)
 
 	var pattern string
 	var verbose bool
@@ -77,7 +78,7 @@ func main() {
 	}()
 
 	for i := range ch {
-		fmt.Println(i.Name())
+		fmt.Printf("%s: %2.f MiB	\n", i.Path, float64(i.Info.Size())/float64(MiB))
 	}
 
 }
