@@ -16,6 +16,7 @@ import (
 func main() {
 
 	const MiB = 1 << 20 // 1 MiB in bytes
+	const KiB = 1 << 10 // 1 KiB in bytes
 
 	var wg sync.WaitGroup
 	// buffered channel to hold search results
@@ -32,6 +33,7 @@ func main() {
 	var verbose bool
 	var root string
 	var maxResults int64 = -1
+	var fileSize bool
 
 	var counter int64 = 0
 
@@ -77,6 +79,13 @@ func main() {
 				Required:    false,
 				Destination: &maxResults,
 			},
+			&cli.BoolFlag{
+				Name:        "file-size",
+				Aliases:     []string{"s"},
+				Usage:       "Display file size in MiB",
+				Value:       false,
+				Destination: &fileSize,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			if pattern == "" {
@@ -116,7 +125,19 @@ func main() {
 			if !ok {
 				return // channel closed, exit
 			}
-			fmt.Printf("%s: %2.f MiB\n", i.Path, float64(i.Info.Size())/float64(MiB))
+			fmt.Printf("%s", i.Path)
+
+			if fileSize {
+				mib := float64(i.Info.Size()) / float64(MiB)
+				if mib < 1 {
+					fmt.Printf(" : %.2f KiB", float64(i.Info.Size())/float64(KiB))
+				} else {
+					fmt.Printf(" : %.2f MiB", mib)
+				}
+			}
+
+			fmt.Println()
+
 			if maxResults > 0 {
 				counter++
 				if counter >= maxResults {
