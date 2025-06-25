@@ -53,7 +53,6 @@ func SearchFile(ctx context.Context, root string, re *regexp.Regexp, verbose boo
 				info, err := entry.Info()
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to get info on %s: %v\n", entry.Name(), err)
-					return
 				}
 				ch <- SearchResult{full_path, info}
 			}
