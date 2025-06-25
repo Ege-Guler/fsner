@@ -12,6 +12,9 @@ import (
 	"github.com/Ege-Guler/fsner/internal/scanner"
 )
 
+const MiB = 1 << 20 // 1 MiB in bytes
+const KiB = 1 << 10 // 1 KiB in bytes
+
 type Config struct {
 	Pattern    string
 	Verbose    bool
@@ -33,9 +36,6 @@ func run() int {
 
 func runSearch(cfg *Config) int {
 
-	const MiB = 1 << 20 // 1 MiB in bytes
-	const KiB = 1 << 10 // 1 KiB in bytes
-
 	var wg sync.WaitGroup
 	// buffered channel to hold search results
 	ch := make(chan scanner.SearchResult, 100)
@@ -46,8 +46,6 @@ func runSearch(cfg *Config) int {
 	// Handle OS signals for graceful shutdown
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	var counter int64 = 0
 
 	wg.Add(1)
 	go scanner.SearchFile(ctx, cfg.Root, cfg.Regex, cfg.Verbose, ch, &wg)
@@ -72,30 +70,41 @@ func runSearch(cfg *Config) int {
 			if !ok {
 				return 0
 			}
-			fmt.Printf("%s", result.Path)
-
-			if cfg.FileSize {
-				mib := float64(result.Info.Size()) / float64(MiB)
-				if mib < 1 {
-					fmt.Printf(" : %.2f KiB", float64(result.Info.Size())/float64(KiB))
-				} else {
-					fmt.Printf(" : %.2f MiB", mib)
-				}
-			}
-			fmt.Println()
-
-			if cfg.MaxResults > 0 {
-				counter++
-				if counter >= cfg.MaxResults {
-					fmt.Printf("\nReached maximum results limit of %d, exiting...\n", cfg.MaxResults)
-					cancel() // cancel the context to stop the search
-					return 0
-				}
-
-			}
-
+			printResult(cancel, cfg, result)
 		}
 
 	}
+
+}
+
+func printResult(cancel context.CancelFunc, cfg *Config, result scanner.SearchResult) {
+
+	fmt.Printf("%s", result.Path)
+
+	// if file size is wanted
+	if cfg.FileSize {
+		mib := float64(result.Info.Size()) / float64(MiB)
+		if mib < 1 {
+			fmt.Printf(" : %.2f KiB", float64(result.Info.Size())/float64(KiB))
+		} else {
+			fmt.Printf(" : %.2f MiB", mib)
+		}
+
+		fmt.Printf(" ")
+	}
+
+	// if search results are limited by MaxResults
+
+	var counter int64 = 0
+	if cfg.MaxResults > 0 {
+		counter++
+		if counter >= cfg.MaxResults {
+			fmt.Printf("\nReached maximum results limit of %d, exiting...\n", cfg.MaxResults)
+			cancel() // cancel the context to stop the search
+			return
+		}
+	}
+
+	fmt.Print("\n")
 
 }
