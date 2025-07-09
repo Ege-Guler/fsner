@@ -27,9 +27,15 @@ type Config struct {
 func run() int {
 	cfg := &Config{}
 	app := setupApp(cfg)
+
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return 1
+	}
+
+	//bash-autocomplete mode
+	if cfg.Regex == nil {
+		return 0
 	}
 	return runSearch(cfg)
 }

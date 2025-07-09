@@ -16,11 +16,33 @@ func setupApp(cfg *Config) *cli.App {
 	}
 
 	return &cli.App{
-		Name:    "fsner",
-		Usage:   "A file system search tool",
-		Version: "0.1.0",
-		Flags:   cliFlags(cfg),
+		Name:                 "fsner",
+		Usage:                "A file system search tool",
+		EnableBashCompletion: true,
+		Version:              "0.1.0",
+		Flags:                cliFlags(cfg),
+		BashComplete: func(c *cli.Context) {
+			if !c.IsSet("pattern") {
+				fmt.Println("--pattern")
+			}
+			if !c.IsSet("verbose") {
+				fmt.Println("--verbose")
+			}
+			if !c.IsSet("root") {
+				fmt.Println("--root")
+			}
+			if !c.IsSet("max") {
+				fmt.Println("--max")
+			}
+
+			if !c.IsSet("file-size") {
+				fmt.Println("--file-size")
+			}
+
+			suggestDirectories()
+		},
 		Action: func(c *cli.Context) error {
+
 			if cfg.Pattern == "" {
 				return fmt.Errorf("pattern is required")
 			}
@@ -29,10 +51,16 @@ func setupApp(cfg *Config) *cli.App {
 			if err != nil {
 				return fmt.Errorf("invalid regex pattern, %w", err)
 			}
+
 			cfg.Regex = re
 			return nil
 		},
 	}
+}
+
+func suggestDirectories() {
+	fmt.Println("tesst")
+	fmt.Println("test1")
 }
 
 func cliFlags(cfg *Config) []cli.Flag {
@@ -74,6 +102,10 @@ func cliFlags(cfg *Config) []cli.Flag {
 			Usage:       "Display file size in MiB",
 			Value:       false,
 			Destination: &cfg.FileSize,
+		},
+		&cli.BoolFlag{
+			Name:   "generate-bash-completion",
+			Hidden: true,
 		},
 	}
 }
