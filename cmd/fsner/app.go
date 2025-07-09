@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 )
@@ -22,6 +25,23 @@ func setupApp(cfg *Config) *cli.App {
 		Version:              "0.1.0",
 		Flags:                cliFlags(cfg),
 		BashComplete: func(c *cli.Context) {
+
+			args := os.Args
+
+			if len(args) > 1 {
+				last := args[len(args)-1]
+				prev := args[len(args)-2]
+
+				if last == "--root" || strings.HasPrefix(prev, "--root") {
+					suggestDirectories()
+					return
+				}
+				if last == "--max" || strings.HasPrefix(prev, "--max") {
+					suggestMax()
+					return
+				}
+			}
+
 			if !c.IsSet("pattern") {
 				fmt.Println("--pattern")
 			}
@@ -39,7 +59,6 @@ func setupApp(cfg *Config) *cli.App {
 				fmt.Println("--file-size")
 			}
 
-			suggestDirectories()
 		},
 		Action: func(c *cli.Context) error {
 
@@ -59,8 +78,24 @@ func setupApp(cfg *Config) *cli.App {
 }
 
 func suggestDirectories() {
-	fmt.Println("tesst")
-	fmt.Println("test1")
+
+	fmt.Println("/")
+	home, err := os.UserHomeDir()
+	if err == nil {
+		fmt.Println(home)
+		fmt.Println(filepath.Join(home, "Downloads"))
+		fmt.Println(filepath.Join(home, "Documents"))
+		fmt.Println(filepath.Join(home, "Pictures"))
+	}
+}
+
+func suggestMax() {
+	fmt.Println("5")
+	fmt.Println("10")
+	fmt.Println("20")
+	fmt.Println("50")
+	fmt.Println("100")
+
 }
 
 func cliFlags(cfg *Config) []cli.Flag {
